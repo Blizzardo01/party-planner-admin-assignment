@@ -67,13 +67,32 @@ async function postParty(newParty) {
   });
 
   const result = await response.json();
-  console.log(result);
 
   if (!response.ok) {
     throw new Error(result.error?.message || "Failed to create party");
   }
 
   await getParties();
+}
+
+async function deleteParty(id) {
+  const response = await fetch(API + "/events/" + id, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(errorText);
+    throw new Error("Failed to delete party");
+  }
+
+  parties = parties.filter(party => party.id !== id);
+
+  if (selectedParty?.id === id) {
+    selectedParty = null;
+  }
+
+  render();
 }
 
 // === Components ===
@@ -110,8 +129,6 @@ function newPartyForum() {
       location: forumData.get("location"),
     };
     postParty(newParty);
-    console.log(parties);
-
   });
 
   return section;
@@ -161,7 +178,17 @@ function SelectedParty() {
     <p>${selectedParty.description}</p>
     <GuestList></GuestList>
   `;
+
+  const button = document.createElement("button");
+  button.name = "delete";
+  button.textContent = "Delete party";
+  
+  button.addEventListener("click", (event) => {
+    deleteParty(selectedParty.id);
+  });
+
   $party.querySelector("GuestList").replaceWith(GuestList());
+  $party.append(button);
 
   return $party;
 }
