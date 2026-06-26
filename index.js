@@ -1,6 +1,6 @@
 // === Constants ===
 const BASE = "https://fsa-crud-2aa9294fe819.herokuapp.com/api";
-const COHORT = ""; // Make sure to change this!
+const COHORT = "/2605-ftb-et-web-ft"; // Make sure to change this!
 const API = BASE + COHORT;
 
 // === State ===
@@ -57,7 +57,65 @@ async function getGuests() {
   }
 }
 
+async function postParty(newParty) {
+  const response = await fetch(API + "/events", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newParty),
+  });
+
+  const result = await response.json();
+  console.log(result);
+
+  if (!response.ok) {
+    throw new Error(result.error?.message || "Failed to create party");
+  }
+
+  await getParties();
+}
+
 // === Components ===
+
+function newPartyForum() {
+  const section = document.createElement("section");
+  const forum = document.createElement("form");
+
+  forum.innerHTML = 
+    `
+    <label>Name</label>
+    <input name="name"/>
+    <label>Description</label>
+    <input name="description"/>
+    <label>Date</label>
+    <input type="date" name="date"/>
+    <label>Location</label>
+    <input name="location"/>
+    <button type="submit">Add party</button>
+    `;
+  
+  
+  section.append(forum);
+
+  forum.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const forumData = new FormData(forum);
+
+    const newParty = {
+      name: forumData.get("name"),
+      description: forumData.get("description"),
+      date: new Date(forumData.get("date")).toISOString(),
+      location: forumData.get("location"),
+    };
+    postParty(newParty);
+    console.log(parties);
+
+  });
+
+  return section;
+}
 
 /** Party name that shows more details about the party when clicked */
 function PartyListItem(party) {
@@ -141,19 +199,29 @@ function render() {
       <section id="selected">
         <h2>Party Details</h2>
         <SelectedParty></SelectedParty>
+        <partyForum></partyForum>
       </section>
     </main>
   `;
 
   $app.querySelector("PartyList").replaceWith(PartyList());
   $app.querySelector("SelectedParty").replaceWith(SelectedParty());
+  $app.querySelector("partyForum").replaceWith(newPartyForum());
 }
 
+
+/*function renderForum() {
+  const $app = document.querySelector("#app");
+  $app.querySelector("partyForum").replaceWith(newPartyForum());
+  console.log($app);
+}
+*/
 async function init() {
   await getParties();
   await getRsvps();
   await getGuests();
   render();
+  //renderForum();
 }
 
 init();
